@@ -13,6 +13,13 @@ Features:
 - export PNG, JPG, BMP
 - export DXF  (**work in progress**)
 
+# Installation
+
+- Start a server on <http://localhost:8000/>   (uses `python`)
+  - `./startHTTP.sh`
+  - open `http://localhost:8000/` in your web browser
+
+
 # Development Instructions
 - Install `python` if not already on your system
 - Install `nodejs` if you haven't (this gives you the `npm` command)
