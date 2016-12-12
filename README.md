@@ -18,10 +18,10 @@ Features:
 - Install `nodejs` if you haven't (this gives you the `npm` command)
 
 - Install dependencies   (uses nodejs `npm`)
-`npm install`
+  - `npm install`
 
 - Start a server on <http://localhost:8000/>   (uses `python`)
-`npm start`
+  - `npm start`
 
 # Future Work
 - TODO: All shapes are **eyeballed from my own memory**.  Need to trace in some actual neck profile shapes when i get some time in front of inkscape (see `drawCshape()` functions, and friends)
