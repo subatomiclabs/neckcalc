@@ -7,11 +7,11 @@ Useful for people milling guitars via CNC.  Artists, whatever.
 Features:
 - Fretboard Radius
 - Fretboard Thickness
-- Neck Shape  **work in progress**
+- Neck Shape  (**work in progress**)
 - Neck Depth
 - Neck Width
 - export PNG, JPG, BMP
-- export DXF  **work in progress**
+- export DXF  (**work in progress**)
 
 # Development Instructions
 - Install `python` if not already on your system
