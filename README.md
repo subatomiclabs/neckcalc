@@ -13,7 +13,11 @@ Features:
 - export PNG, JPG, BMP
 - export DXF  (**work in progress**)
 
-# Installation
+# How To Run
+
+- Point your browser to `index.html` in this directory
+
+or
 
 - Start a server on <http://localhost:8000/>   (uses `python`)
   - `./startHTTP.sh`
