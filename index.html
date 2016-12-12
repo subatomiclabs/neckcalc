@@ -89,7 +89,7 @@
          surface_pts.push( p3[0] );
          surface_pts.push( p3[1] );
       }
-      let surface_pts_curve = drawCurve( ctx, offset[0], offset[1], scale, surface_pts, 0.5, false, 16, "#ff0000", 2, true);
+      let surface_pts_curve = drawCurve( ctx, offset[0], offset[1], scale, surface_pts, false, 16, "#ff0000", 2, true);
       let fretboard_flat_points = [p1[0],p1[1],p1[0],p1[1]+fbt,p2[0],p2[1]+fbt,p2[0],p2[1]];
       drawLines( ctx, offset[0], offset[1], scale, fretboard_flat_points, "#ff0000", 2 );
       bounds = max( bounds, add( offset, mul( scale, p2 ) ) );
@@ -141,7 +141,7 @@
          0.97*w,0.20 * d + fbt,
          1*w,   0.00 * d + fbt
       ];
-      drawCurve(ctx, offset[0],offset[1], scale, pts, 0.5, false, 16, "#00ff00", 2, true);
+      drawCurve(ctx, offset[0],offset[1], scale, pts, false, 16, "#00ff00", 2, true);
 
       // draw shape type label
       {
@@ -169,7 +169,7 @@
          0.80*w,50/300 * d + fbt,
          1*w,0/300 * d + fbt
       ];
-      drawCurve(ctx, offset[0],offset[1], scale, pts, 0.5, false, 16, "#00ff00", 2, true);
+      drawCurve(ctx, offset[0],offset[1], scale, pts, false, 16, "#00ff00", 2, true);
       return bounds;
    }
    function drawDshape(offset, scale, d,w,r, fbt)
@@ -184,7 +184,7 @@
          0.80*w,50/300 * d + fbt,
          1*w,0/300 * d + fbt
       ];
-      drawCurve(ctx, offset[0],offset[1], scale, pts, 0.5, false, 16, "#00ff00", 2, true);
+      drawCurve(ctx, offset[0],offset[1], scale, pts, false, 16, "#00ff00", 2, true);
       return bounds;
    }
    function drawRVshape(offset, scale, d,w,r, fbt)
@@ -199,7 +199,7 @@
          0.80*w,50/300 * d + fbt,
          1*w,0/300 * d + fbt
       ];
-      drawCurve(ctx, offset[0],offset[1], scale, pts, 0.5, false, 16, "#00ff00", 2, true);
+      drawCurve(ctx, offset[0],offset[1], scale, pts, false, 16, "#00ff00", 2, true);
       return bounds;
    }
 

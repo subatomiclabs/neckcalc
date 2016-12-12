@@ -14,6 +14,7 @@ function loadScript(url, callback=undefined)
     // Fire the loading
     head.appendChild(script);
 }
+
 loadScript( "node_modules/file-saver/FileSaver.min.js" );
 
 function saveText(text, filename, mimetype="application/dxf;charset=utf-8")
@@ -21,6 +22,7 @@ function saveText(text, filename, mimetype="application/dxf;charset=utf-8")
    var blob = new Blob(text, {type: mimetype});
    saveAs(blob, filename);
 }
+
 function showText(text, mimetype="text/plain")
 {
    //window.location.href = "data:" + mimetype + ";charset=utf-8," + encodeURIComponent( text.join('') );
@@ -125,13 +127,13 @@ var Canvas2Image = (function() {
    // takes an imagedata object as argument
    var createBMP = function(oData) {
       var aHeader = [];
-   
+
       var iWidth = oData.width;
       var iHeight = oData.height;
 
       aHeader.push(0x42); // magic 1
-      aHeader.push(0x4D); 
-   
+      aHeader.push(0x4D);
+
       var iFileSize = iWidth*iHeight*3 + 54; // total header size = 54 bytes
       aHeader.push(iFileSize % 256); iFileSize = Math.floor(iFileSize / 256);
       aHeader.push(iFileSize % 256); iFileSize = Math.floor(iFileSize / 256);
@@ -159,34 +161,34 @@ var Canvas2Image = (function() {
       aInfoHeader.push(iImageWidth % 256); iImageWidth = Math.floor(iImageWidth / 256);
       aInfoHeader.push(iImageWidth % 256); iImageWidth = Math.floor(iImageWidth / 256);
       aInfoHeader.push(iImageWidth % 256);
-   
+
       var iImageHeight = iHeight;
       aInfoHeader.push(iImageHeight % 256); iImageHeight = Math.floor(iImageHeight / 256);
       aInfoHeader.push(iImageHeight % 256); iImageHeight = Math.floor(iImageHeight / 256);
       aInfoHeader.push(iImageHeight % 256); iImageHeight = Math.floor(iImageHeight / 256);
       aInfoHeader.push(iImageHeight % 256);
-   
+
       aInfoHeader.push(1); // num of planes
       aInfoHeader.push(0);
-   
+
       aInfoHeader.push(24); // num of bits per pixel
       aInfoHeader.push(0);
-   
+
       aInfoHeader.push(0); // compression = none
       aInfoHeader.push(0);
       aInfoHeader.push(0);
       aInfoHeader.push(0);
-   
+
       var iDataSize = iWidth*iHeight*3; 
       aInfoHeader.push(iDataSize % 256); iDataSize = Math.floor(iDataSize / 256);
       aInfoHeader.push(iDataSize % 256); iDataSize = Math.floor(iDataSize / 256);
       aInfoHeader.push(iDataSize % 256); iDataSize = Math.floor(iDataSize / 256);
       aInfoHeader.push(iDataSize % 256); 
-   
+
       for (var i=0;i<16;i++) {
          aInfoHeader.push(0); // these bytes not used
       }
-   
+
       var iPadding = (4 - ((iWidth * 3) % 4)) % 4;
 
       var aImgData = oData.data;
@@ -271,7 +273,7 @@ var Canvas2Image = (function() {
          var oScaledCanvas = scaleCanvas(oCanvas, iWidth, iHeight);
          var strMime = "image/jpeg";
          var strData = oScaledCanvas.toDataURL(strMime);
-   
+
          // check if browser actually supports jpeg by looking for the mime type in the data uri.
          // if not, return false
          if (strData.indexOf(strMime) != 5) {
@@ -385,10 +387,10 @@ function drawStar( ctx, x, y, size, c1, c2, linewidth )
 }
 
 /**
- *		Draws an array of points (x,y).
- *		context				= 2d context from canvas element
- *		points				= array of float or integers arranged as x1,y1,x2,y1,...,xn,yn. Minimum 2 points.
- *		NOTE: array must contain a minimum set of two points.
+ *      Draws an array of points (x,y).
+ *      context            = 2d context from canvas element
+ *      points            = array of float or integers arranged as x1,y1,x2,y1,...,xn,yn. Minimum 2 points.
+ *      NOTE: array must contain a minimum set of two points.
  */
 function drawLines(ctx, x, y, scale, pts, color, linewidth) {
    ctx.strokeStyle = color;
@@ -411,115 +413,34 @@ function drawPoint( ctx, x, y, scale, pt, color )
 }
 
 // returns spline points
-function drawCurve(ctx, x, y, scale, ptsa, tension, isClosed, numOfSegments, color, linewidth, showPoints) {
+function drawCurve(ctx, x, y, scale, ptsa, isClosed, numOfSegments, color, linewidth, showPoints) {
 
-	showPoints	= showPoints ? showPoints : false;
-   let curve_pts = getCurvePoints2(ptsa, tension, isClosed, numOfSegments);
-	drawLines(ctx, x, y, scale, curve_pts, color, linewidth);
+   showPoints   = showPoints ? showPoints : false;
+   let curve_pts = getCurvePoints(ptsa, numOfSegments);
+   drawLines(ctx, x, y, scale, curve_pts, color, linewidth);
 
-	if (showPoints) {
+   if (showPoints) {
       console.log( "drawing points" );
       ctx.fillStyle = color;
-		ctx.beginPath();
-		for(var i = 0; i < ptsa.length - 1; i += 2) {
+      ctx.beginPath();
+      for(var i = 0; i < ptsa.length - 1; i += 2) {
          ctx.rect( (ptsa[i]*scale[0]) - 2 + x, (ptsa[i+1]*scale[1] - 2) + y, 4, 4 );
          //console.log( ptsa[i] + " " + ptsa[i+1] );
       }
       ctx.fill();
-	}
+   }
    return curve_pts;
 }
 
-/**
- *		Uses an array of points (x,y) to return an array containing points
- *		for a smooth curve.
- *
- *	USAGE:
- *
- *		getCurvePoints(points, tension, isClosed, numberOfSegments)
- *
- *		getCurvePoints(array)
- *		getCurvePoints(array, float)
- *		getCurvePoints(array, float, boolean)
- *		getCurvePoints(array, float, boolean, integer)
- *
- *		points				= array of float or integers arranged as x1,y1,x2,y1,...,xn,yn. Minimum 2 points.
- *		tension				= 0-1, 0 = no smoothing, 0.5 = smooth (default), 1 = very smoothed
- *		isClosed			= true = calculate a closed curve, false = open ended curve (default)
- *		numberOfSegments	= resolution of the smoothed curve. Higer number -> smoother (default 16)
- *
- *		NOTE: array must contain a minimum set of two points.
- *		Known bugs: closed curve draws last point wrong.
- */
-function getCurvePoints(ptsa, tension, numOfSegments) {
-
-	// use input value if provided, or use a default value	 
-	tension 		=	(tension != 'undefined') ? tension : 0.5;
-	numOfSegments 	=	numOfSegments	? numOfSegments	: 16;
-
-	var _pts = [], res = [],	// clone array
-		x, y,					// our x,y coords
-		t1x, t2x, t1y, t2y,		// tension vectors
-		c1, c2, c3, c4,			// cardinal points
-		st, t, i;				// steps based on num. of segments
-
-	// clone array so we don't change the original
-	_pts = ptsa.slice(0);
-
-    _pts.unshift(ptsa[1]);			//copy 1. point and insert at beginning
-    _pts.unshift(ptsa[0]);
-    _pts.push(ptsa[ptsa.length - 2]);	//copy last point and append
-    _pts.push(ptsa[ptsa.length - 1]);
-
-	// ok, lets start..
-    console.log( "new curve: pts:" + ptsa.length );
-
-	
-	// 1. loop goes through point array
-	// 2. loop goes through each segment between the two points + one point before and after
-	for (i=2; i < (_pts.length - 4); i+=2) {
-
-        // calc tension vectors
-        t1x = (_pts[i+2] - _pts[i-2]) * tension;
-        t2x = (_pts[i+4] - _pts[i]) * tension;
-        
-        t1y = (_pts[i+3] - _pts[i-1]) * tension;
-        t2y = (_pts[i+5] - _pts[i+1]) * tension;
-
-        for (t=0; t <= numOfSegments; t++) {
-
-			// calc step
-			st = t / numOfSegments;
-		
-			// calc cardinals
-			c1 =   2 * Math.pow(st, 3) 	- 3 * Math.pow(st, 2) + 1; 
-			c2 = -(2 * Math.pow(st, 3)) + 3 * Math.pow(st, 2); 
-			c3 = 	   Math.pow(st, 3)	- 2 * Math.pow(st, 2) + st; 
-			c4 = 	   Math.pow(st, 3)	- 	  Math.pow(st, 2);
-
-			// calc x and y cords with common control vectors
-			x = c1 * _pts[i]	+ c2 * _pts[i+2] + c3 * t1x + c4 * t2x;
-			y = c1 * _pts[i+1]	+ c2 * _pts[i+3] + c3 * t1y + c4 * t2y;
-		
-			//store points in array
-			res.push(x);
-			res.push(y);
-         console.log( "pt: " + x + ", " + y );
-
-		}
-	}
-	
-	return res;
-}
-
-
-// Catmull Rom Spline (Uniform, Centripetal, Chordal)
+// Catmull Rom Spline from arbitrary list of points (Uniform, Centripetal, Chordal)
 // https://en.wikipedia.org/wiki/Centripetal_Catmull%E2%80%93Rom_spline
-function getCurvePoints2(ptsa, tension, numOfSegments) {
+//
+// ptsa           flat float array of points
+// numOfSegments  how many subdivisions in between each point
+// alpha          0==uniform (std catmull rom), 0.5==centripetal, 1.0==chordal
+function getCurvePoints(ptsa, numOfSegments, alpha=0.5 /*centripetal*/) {
    numOfSegments = numOfSegments ? numOfSegments : 16;
-   let alpha = 0.5; // 0==uniform (std), 0.5==centripetal, 1.0==chordal
    //console.log( " numOfSegments:" + numOfSegments  );
-
 
    let first = [ptsa[0], ptsa[1]];
    let second = [ptsa[2], ptsa[3]];
