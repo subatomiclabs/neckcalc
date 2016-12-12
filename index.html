@@ -142,6 +142,71 @@
          1*w,   0.00 * d + fbt
       ];
       drawCurve(ctx, offset[0],offset[1], scale, pts, false, 16, "#00ff00", 2, true);
+      return bounds;
+   }
+
+   function drawVshape(offset, scale, d,w,r, fbt)
+   {
+      let bounds = [0,0];
+      let pts = [
+         0*w,   0.00 * d + fbt,
+         0.125*w,0.35 * d + fbt,
+         0.25*w,0.63 * d + fbt,
+         0.375*w,0.85 * d + fbt,
+         0.5*w, 1.00 * d + fbt,
+         0.625*w,0.85 * d + fbt,
+         0.75*w,0.63 * d + fbt,
+         0.875*w,0.35 * d + fbt,
+         1*w,   0.00 * d + fbt
+      ];
+      drawCurve(ctx, offset[0],offset[1], scale, pts, false, 16, "#00ff00", 2, true);
+      return bounds;
+   }
+   function drawDshape(offset, scale, d,w,r, fbt)
+   {
+      let bounds = [0,0];
+      let pts = [
+         0*w,   0.00 * d + fbt,
+         0.01*w,0.20 * d + fbt,
+         0.15*w,0.70 * d + fbt,
+         0.33*w,0.95 * d + fbt,
+         0.5*w, 1.00 * d + fbt,
+         0.66*w,0.95 * d + fbt,
+         0.85*w,0.70 * d + fbt,
+         0.99*w,0.20 * d + fbt,
+         1*w,   0.00 * d + fbt
+      ];
+      drawCurve(ctx, offset[0],offset[1], scale, pts, false, 16, "#00ff00", 2, true);
+      return bounds;
+   }
+   function drawRVshape(offset, scale, d,w,r, fbt)
+   {
+      let bounds = [0,0];
+      let pts = [
+         0*w,   0.00 * d + fbt,
+         0.125*w,0.40 * d + fbt,
+         0.25*w,0.70 * d + fbt,
+         0.375*w,0.90 * d + fbt,
+         0.5*w, 1.00 * d + fbt,
+         0.625*w,0.90 * d + fbt,
+         0.75*w,0.70 * d + fbt,
+         0.875*w,0.40 * d + fbt,
+         1*w,   0.00 * d + fbt
+      ];
+      drawCurve(ctx, offset[0],offset[1], scale, pts, false, 16, "#00ff00", 2, true);
+      return bounds;
+   }
+   function drawShape(offset, scale, d,w,r, fbt, shape)
+   {
+      let bounds = [0,0];
+      if (shape == "C")
+         bounds = drawCshape( offset, scale, d,w,r, fbt );
+      else if (shape == "D")
+         bounds = drawDshape( offset, scale, d,w,r, fbt );
+      else if (shape == "V")
+         bounds = drawVshape( offset, scale, d,w,r, fbt );
+      else if (shape == "rV")
+         bounds = drawRVshape( offset, scale, d,w,r, fbt );
 
       // draw shape type label
       {
@@ -154,52 +219,6 @@
          drawText(ctx, offset[0], offset[1], scale, w.toString() + " depth", 0.5*w + off1, (d + fbt)*0.5, "#ffffff", "bold", 16);
          drawLines( ctx, offset[0], offset[1], scale, [0.5*w, 0, 0.5*w, d + fbt], "#ffffff", 2 );
       }
-      return bounds;
-   }
-
-   function drawVshape(offset, scale, d,w,r, fbt)
-   {
-      let bounds = [0,0];
-      let pts = [
-         0*w,0 * d + fbt,
-         0.15*w,300/300 * d + fbt,
-         0.33*w,100/300 * d + fbt,
-         0.5*w,150/300 * d + fbt,
-         0.66*w,100/300 * d + fbt,
-         0.80*w,50/300 * d + fbt,
-         1*w,0/300 * d + fbt
-      ];
-      drawCurve(ctx, offset[0],offset[1], scale, pts, false, 16, "#00ff00", 2, true);
-      return bounds;
-   }
-   function drawDshape(offset, scale, d,w,r, fbt)
-   {
-      let bounds = [0,0];
-      let pts = [
-         0*w,0 * d + fbt,
-         0.15*w,300/300 * d + fbt,
-         0.33*w,100/300 * d + fbt,
-         0.5*w,150/300 * d + fbt,
-         0.66*w,100/300 * d + fbt,
-         0.80*w,50/300 * d + fbt,
-         1*w,0/300 * d + fbt
-      ];
-      drawCurve(ctx, offset[0],offset[1], scale, pts, false, 16, "#00ff00", 2, true);
-      return bounds;
-   }
-   function drawRVshape(offset, scale, d,w,r, fbt)
-   {
-      let bounds = [0,0];
-      let pts = [
-         0*w,0 * d + fbt,
-         0.15*w,300/300 * d + fbt,
-         0.33*w,100/300 * d + fbt,
-         0.5*w,150/300 * d + fbt,
-         0.66*w,100/300 * d + fbt,
-         0.80*w,50/300 * d + fbt,
-         1*w,0/300 * d + fbt
-      ];
-      drawCurve(ctx, offset[0],offset[1], scale, pts, false, 16, "#00ff00", 2, true);
       return bounds;
    }
 
@@ -232,19 +251,10 @@
       //drawStar( ctx, 10,50, 100, "#ff0000", "#00ff00", 2 );
       //drawStar( ctx, 50,10, 100, "#ff0000", "#00ff00", 2 );
 
-      let bounds = [300,300];
+      let bounds = [0,0];
       bounds = max( bounds, drawFretboard( offset, scale, d,w,r, fbt ) );
+      bounds = max( bounds, drawShape( offset, scale, d-fbt,w,r, fbt, shape ) );
 
-      let shape_bounds = [0,0];
-      if (shape == "C")
-         shape_bounds = drawCshape( offset, scale, d-fbt,w,r, fbt );
-      else if (shape == "D")
-         shape_bounds = drawDshape( offset, scale, d-fbt,w,r, fbt );
-      else if (shape == "V")
-         shape_bounds = drawVshape( offset, scale, d-fbt,w,r, fbt );
-      else if (shape == "rV")
-         shape_bounds = drawRVshape( offset, scale, d-fbt,w,r, fbt );
-      bounds = max( bounds, shape_bounds );
       return bounds;
    }
 </script>
