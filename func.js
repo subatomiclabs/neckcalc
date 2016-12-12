@@ -14,7 +14,7 @@ function loadScript(url, callback=undefined)
     // Fire the loading
     head.appendChild(script);
 }
-loadScript( "FileSaver.min.js" );
+loadScript( "node_modules/file-saver/FileSaver.min.js" );
 
 function saveText(text, filename, mimetype="application/dxf;charset=utf-8")
 {
