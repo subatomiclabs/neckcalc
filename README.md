@@ -2,6 +2,8 @@
 
 Making 3D Models for guitar design?  This calculator will create cross-sections of a guitar neck which you can import into your modeling software to create an accurate guitar neck.
 
+Useful for people milling guitars via CNC.
+
 Features:
 - Fretboard Radius
 - Fretboard Thickness
@@ -9,6 +11,7 @@ Features:
 - Neck Depth
 - Neck Width
 - export PNG, JPG, BMP
+- **work in progress**: export DXF
 
 # Development Instructions
 Install nodejs if you haven't (this gives you the npm command)
