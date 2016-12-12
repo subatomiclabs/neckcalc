@@ -1,8 +1,8 @@
 # Guitar Neck Calculator
 
-Making 3D Models for guitar design?  This calculator will create cross-sections of a guitar neck which you can import into your modeling software to create an accurate guitar neck.
+Making 3D Models for guitar design?  This calculator will create cross-sections of a guitar neck which you can import into your 3D modeling (or CAD) software to then extrude to create an accurate guitar neck.
 
-Useful for people milling guitars via CNC.
+Useful for people milling guitars via CNC.  Artists, whatever.
 
 Features:
 - Fretboard Radius
