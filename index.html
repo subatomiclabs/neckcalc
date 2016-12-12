@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<!-- saved from url=(0038)http://www.subatomiclabs.com/neckcalc/ -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+   <script type="text/javascript" src="func.js"></script>
+</head>
+<body>
+
+<style type="text/css">
+   button,input,p,a,default,plaintext,html,BODY,text {font-family:Verdana,sans-serif;font-size:11px;color:#000000;}
+   a {color: #6666ff;}
+   input {vertical-align:baseline;width:50px;height:20px;font-weight:bold;}
+   table {display:inline-block;border-spacing:0px;border-collapse:collapse;vertical-align:top;padding:0;margin:0;}
+   td {padding: 0px;}
+   .spinner {display:block;border:1;font-size:7px;margin-left:0px;margin-right:0px;padding:0px;width:23px;height:13px;text-align:center;vertical-align:middle;}
+</style>
+<script>
+   function dot(a,b) {
+      var n = 0, lim = Math.min(a.length,b.length);
+      for (var i = 0; i < lim; i++) n += a[i] * b[i];
+      return n;
+   }
+   function sub(a,b) {
+      return [a[0]-b[0], a[1]-b[1]];
+   }
+   function mul(a,b) {
+      return [a[0]*b[0], a[1]*b[1]];
+   }
+   function max(a,b) {
+      return [
+         a[0]>b[0]?a[0]:b[0],
+         a[1]>b[1]?a[1]:b[1]
+      ];
+   }
+   function add(a,b) {
+      return [a[0]+b[0], a[1]+b[1]];
+   }
+   function length(a) {
+      return Math.sqrt( a[0]*a[0] + a[1]*a[1] );
+   }
+   function mulMatVec( m, v ) {
+      return [dot(m[0], v), dot(m[1], v)];
+   }
+   function normalize( v ) {
+      let l = length(v);
+      return [v[0] / l, v[1] / l];
+   }
+   var dxfData = [];
+   function clearDxf() {dxfData = [];}
+   function addFlatPointsToDxf( pts ) {
+     for (let x = 0; x < pts.length; x += 2) {
+       dxfData.push(pts[x+0].toString() + ",");
+       dxfData.push(pts[x+1].toString() + ((x<pts.length-2)?",\n":""));
+     }
+   }
+   function addTextToDxf( txt ) {
+      dxfData.push(txt);
+   }
+
+   function drawFretboard(offset, scale, d,w,r, fbt)
+   {
+      let bounds = [0,0];
+      let p1 = [0,0];
+      let p2 = [w,0];
+      // pythagorean
+      // h*h = a*a + b*b
+      let center = Math.sqrt( (r * r) / ((w/2) * (w/2)) );
+      let c = [w/2,center];
+      drawPoint( ctx, offset[0], offset[1], scale, p1, "#ffff00" );
+      drawPoint( ctx, offset[0], offset[1], scale, p2, "#ffff00" );
+      drawPoint( ctx, offset[0], offset[1], scale, c, "#ffff00" );
+      //drawLines( ctx, offset[0], offset[1], scale, [p1[0],p1[1],c[0],c[1],p2[0],p2[1]], "#ffff00", 2 );
+      //console.log( "center: " + w/2 + "," + center );
+
+      let v1 = sub(p1,c);
+      let v2 = sub(p2,c);
+      let d1 = length( v1 );
+      let d2 = length( v2 );
+      v1 = normalize( v1 );
+      v2 = normalize( v2 );
+      let a = Math.acos( dot(v1,v2) ); // angle
+      let surface_pts = [];
+      for (let x=0; x <= 1.0; x += 0.1) {
+         let angle = x*a;
+         let mat = [[Math.cos(angle), Math.sin(angle)], [-Math.sin(angle), Math.cos(angle)]];
+         let p3 = add( mulMatVec( mat, sub(p2,c) ), c );
+         drawPoint( ctx, offset[0], offset[1], scale, p3, "#ff0000" );
+         drawLines( ctx, offset[0], offset[1], scale, [p3[0],p3[1],c[0],c[1]], "#330000", 2 );
+         //console.log( p3[0], p3[1] );
+         surface_pts.push( p3[0] );
+         surface_pts.push( p3[1] );
+      }
+      let surface_pts_curve = drawCurve( ctx, offset[0], offset[1], scale, surface_pts, 0.5, false, 16, "#ff0000", 2, true);
+      let fretboard_flat_points = [p1[0],p1[1],p1[0],p1[1]+fbt,p2[0],p2[1]+fbt,p2[0],p2[1]];
+      drawLines( ctx, offset[0], offset[1], scale, fretboard_flat_points, "#ff0000", 2 );
+      bounds = max( bounds, add( offset, mul( scale, p2 ) ) );
+      bounds = max( bounds, add( offset, mul( scale, c ) ) );
+
+      // build dxf file
+      addTextToDxf( "// fretboard\n" );
+      addFlatPointsToDxf( surface_pts_curve );
+      addTextToDxf( ",\n" );
+      addFlatPointsToDxf( fretboard_flat_points );
+
+      // draw fretboard radius center label
+      {
+         let off1 = 0.09;
+         let off2 = off1 + 0.01;
+         drawText(ctx, offset[0], offset[1], scale, "center of " + r.toString() + " radius", c[0]+off2, c[1], "#ffffff", "bold", 16);
+         bounds[1] += 10; // bottom padding
+      }
+      // draw fretboard thickness label
+      {
+         let off1 = 0.09;
+         let off2 = off1 + 0.01;
+         let tw = drawText(ctx, offset[0], offset[1], scale, fbt.toString() + " thick", p2[0]+off2, p2[1]+fbt/2, "#ffffff", "bold", 16);
+         drawLines( ctx, offset[0], offset[1], scale, [p2[0]+off1,p2[1], p2[0]+off1,p2[1]+fbt], "#ffffff", 2 );
+         bounds[0] += off2*scale[0]+tw; // bump out for the label
+         bounds[0] += 10; // right padding
+      }
+      // draw fretboard width label
+      {
+         let off1 = -0.09;
+         let off2 = off1 - 0.01;
+         drawText(ctx, offset[0], offset[1], scale, w.toString() + " w  (" + r.toString() + " radius)", (p1[0]+p2[0])/2, (p1[0]+p2[1])/2 + off2, "#ffffff", "bold", 16);
+         drawLines( ctx, offset[0], offset[1], scale, [p1[0],p1[1]+off1, p2[0],p2[1]+off1], "#ffffff", 2 );
+      }
+      return bounds;
+   }
+
+   function drawCshape(offset, scale, d,w,r, fbt)
+   {
+      let bounds = [0,0];
+      let pts = [
+         0*w,   0.00 * d + fbt,
+         0.03*w,0.20 * d + fbt,
+         0.15*w,0.70 * d + fbt,
+         0.33*w,0.95 * d + fbt,
+         0.5*w, 1.00 * d + fbt,
+         0.66*w,0.95 * d + fbt,
+         0.85*w,0.70 * d + fbt,
+         0.97*w,0.20 * d + fbt,
+         1*w,   0.00 * d + fbt
+      ];
+      drawCurve(ctx, offset[0],offset[1], scale, pts, 0.5, false, 16, "#00ff00", 2, true);
+
+      // draw shape type label
+      {
+         let off1 = +0.09;
+         drawText(ctx, offset[0], offset[1], scale, '"C" type', 0.5*w, d + fbt + off1, "#ffffff", "bold", 16);
+      }
+      // draw neck depth label
+      {
+         let off1 = +0.04;
+         drawText(ctx, offset[0], offset[1], scale, w.toString() + " depth", 0.5*w + off1, (d + fbt)*0.5, "#ffffff", "bold", 16);
+         drawLines( ctx, offset[0], offset[1], scale, [0.5*w, 0, 0.5*w, d + fbt], "#ffffff", 2 );
+      }
+      return bounds;
+   }
+
+   function drawVshape(offset, scale, d,w,r, fbt)
+   {
+      let bounds = [0,0];
+      let pts = [
+         0*w,0 * d + fbt,
+         0.15*w,300/300 * d + fbt,
+         0.33*w,100/300 * d + fbt,
+         0.5*w,150/300 * d + fbt,
+         0.66*w,100/300 * d + fbt,
+         0.80*w,50/300 * d + fbt,
+         1*w,0/300 * d + fbt
+      ];
+      drawCurve(ctx, offset[0],offset[1], scale, pts, 0.5, false, 16, "#00ff00", 2, true);
+      return bounds;
+   }
+   function drawDshape(offset, scale, d,w,r, fbt)
+   {
+      let bounds = [0,0];
+      let pts = [
+         0*w,0 * d + fbt,
+         0.15*w,300/300 * d + fbt,
+         0.33*w,100/300 * d + fbt,
+         0.5*w,150/300 * d + fbt,
+         0.66*w,100/300 * d + fbt,
+         0.80*w,50/300 * d + fbt,
+         1*w,0/300 * d + fbt
+      ];
+      drawCurve(ctx, offset[0],offset[1], scale, pts, 0.5, false, 16, "#00ff00", 2, true);
+      return bounds;
+   }
+   function drawRVshape(offset, scale, d,w,r, fbt)
+   {
+      let bounds = [0,0];
+      let pts = [
+         0*w,0 * d + fbt,
+         0.15*w,300/300 * d + fbt,
+         0.33*w,100/300 * d + fbt,
+         0.5*w,150/300 * d + fbt,
+         0.66*w,100/300 * d + fbt,
+         0.80*w,50/300 * d + fbt,
+         1*w,0/300 * d + fbt
+      ];
+      drawCurve(ctx, offset[0],offset[1], scale, pts, 0.5, false, 16, "#00ff00", 2, true);
+      return bounds;
+   }
+
+   function drawStuff()
+   {
+      clearDxf();
+      let form = document.getElementById("form");
+      let s = parseFloat( form.scale.value );
+      let o = parseFloat( form.offset.value );
+      let scale=[s,s];
+      let offset=[20,o];
+      let d = parseFloat( form.depth.value );
+      let w = parseFloat( form.width.value );
+      let r = parseFloat( form.radius.value );
+      let fbt = parseFloat( form.fbt.value );
+      console.log( typeof fbt );
+      let sx = document.getElementById("shape").selectedIndex;
+      let sy = document.getElementById("shape").options;
+      let shape = sy[sx].value;
+      console.log( d + " " + w + " " + r + " "  + shape );
+
+      let height = 0;
+      var c = document.getElementById("canvas");
+      // clear the canvas to white
+      //ctx.clearRect( 0, 0, canvas.width, canvas.height );  // happens when canvas.width is set
+      ctx.fillStyle = "#000000";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      //drawStar( ctx, 10,10, 100, "#ff0000", "#00ff00", 2 );
+      //drawStar( ctx, 10,50, 100, "#ff0000", "#00ff00", 2 );
+      //drawStar( ctx, 50,10, 100, "#ff0000", "#00ff00", 2 );
+
+      let bounds = [300,300];
+      bounds = max( bounds, drawFretboard( offset, scale, d,w,r, fbt ) );
+
+      let shape_bounds = [0,0];
+      if (shape == "C")
+         shape_bounds = drawCshape( offset, scale, d-fbt,w,r, fbt );
+      else if (shape == "D")
+         shape_bounds = drawDshape( offset, scale, d-fbt,w,r, fbt );
+      else if (shape == "V")
+         shape_bounds = drawVshape( offset, scale, d-fbt,w,r, fbt );
+      else if (shape == "rV")
+         shape_bounds = drawRVshape( offset, scale, d-fbt,w,r, fbt );
+      bounds = max( bounds, shape_bounds );
+      return bounds;
+   }
+</script>
+
+<form id="form">
+  Depth:
+  <input type="number" onchange="resizeCanvas()" name="depth" min="0" value="0.787402" step="0.1"><br>
+  Width:
+  <input type="number" onchange="resizeCanvas()" name="width" min="0" value="1.692" step="0.1"><br>
+  Radius:
+  <input type="number" onchange="resizeCanvas()" name="radius" min="0" value="12" step="0.25"><br>
+  FretBoard Thickness:
+  <input type="number" onchange="resizeCanvas()" name="fbt" min="0" value="0.125" step="0.0625"><br>
+  Shape Type:
+  <select id="shape" name="shape" onchange="resizeCanvas()" form="shapeForm">
+   <option value="C">C</option>
+   <option value="D">D</option>
+   <option value="V">V</option>
+   <option value="rV">Rounded V</option>
+  </select><br>
+  Scale:
+  <input type="number" onchange="resizeCanvas()" name="scale" min="0" value="300" step="25">
+  Offset:
+  <input type="number" onchange="resizeCanvas()" name="offset" min="0" value="100" step="25"><br>
+  <button type="button" onclick="convertCanvasToImage(canvas,'png')">PNG</button>
+  <button type="button" onclick="convertCanvasToImage(canvas,'bmp')">BMP</button>
+  <button type="button" onclick="convertCanvasToImage(canvas,'jpg')">JPG</button>
+  <button type="button" onclick="showText(dxfData, 'text/plain')">DXF</button>
+  <button type="button" onclick="saveText(dxfData, 'fretboard_and_neck.dxf', 'application/dxf')">Save DXF</button>
+</form>
+
+
+<canvas id="canvas" width="1440" height="4128" style="border:0px">
+
+
+<script>
+   //=============================================================================
+   var canvas = document.getElementById('canvas'), ctx = canvas.getContext('2d');
+
+   window.addEventListener('resize', resizeCanvas, false);
+
+   function resizeCanvas()
+   {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight * 6;
+      let size = drawStuff();
+
+      canvas.width = size[0];
+      canvas.height = size[1];
+      drawStuff();
+   }
+   resizeCanvas();
+</script>
+
+
+
+
+</canvas></body></html>
