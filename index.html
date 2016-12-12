@@ -141,7 +141,9 @@
          0.97*w,0.20 * d + fbt,
          1*w,   0.00 * d + fbt
       ];
-      drawCurve(ctx, offset[0],offset[1], scale, pts, false, 16, "#00ff00", 2, true);
+      let curve_pts = drawCurve(ctx, offset[0],offset[1], scale, pts, false, 16, "#00ff00", 2, true);
+      addTextToDxf( "\n\n// neck\n" );
+      addFlatPointsToDxf( curve_pts );
       return bounds;
    }
 
@@ -159,7 +161,9 @@
          0.875*w,0.35 * d + fbt,
          1*w,   0.00 * d + fbt
       ];
-      drawCurve(ctx, offset[0],offset[1], scale, pts, false, 16, "#00ff00", 2, true);
+      let curve_pts = drawCurve(ctx, offset[0],offset[1], scale, pts, false, 16, "#00ff00", 2, true);
+      addTextToDxf( "\n\n// neck\n" );
+      addFlatPointsToDxf( curve_pts );
       return bounds;
    }
    function drawDshape(offset, scale, d,w,r, fbt)
@@ -176,7 +180,9 @@
          0.99*w,0.20 * d + fbt,
          1*w,   0.00 * d + fbt
       ];
-      drawCurve(ctx, offset[0],offset[1], scale, pts, false, 16, "#00ff00", 2, true);
+      let curve_pts = drawCurve(ctx, offset[0],offset[1], scale, pts, false, 16, "#00ff00", 2, true);
+      addTextToDxf( "\n\n// neck\n" );
+      addFlatPointsToDxf( curve_pts );
       return bounds;
    }
    function drawRVshape(offset, scale, d,w,r, fbt)
@@ -193,7 +199,9 @@
          0.875*w,0.40 * d + fbt,
          1*w,   0.00 * d + fbt
       ];
-      drawCurve(ctx, offset[0],offset[1], scale, pts, false, 16, "#00ff00", 2, true);
+      let curve_pts = drawCurve(ctx, offset[0],offset[1], scale, pts, false, 16, "#00ff00", 2, true);
+      addTextToDxf( "\n\n// neck\n" );
+      addFlatPointsToDxf( curve_pts );
       return bounds;
    }
    function drawShape(offset, scale, d,w,r, fbt, shape)
