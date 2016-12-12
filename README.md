@@ -14,12 +14,13 @@ Features:
 - export DXF  **work in progress**
 
 # Development Instructions
-Install nodejs if you haven't (this gives you the npm command)
+- Install `python` if not already on your system
+- Install `nodejs` if you haven't (this gives you the `npm` command)
 
-Install dependencies   (uses nodejs `npm`)
+- Install dependencies   (uses nodejs `npm`)
 `npm install`
 
-Start a server on http://localhost:8000/   (uses python)
+- Start a server on <http://localhost:8000/>   (uses `python`)
 `npm start`
 
 # Future Work
