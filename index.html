@@ -1,6 +1,6 @@
 <!DOCTYPE html>
-<!-- saved from url=(0038)http://www.subatomiclabs.com/neckcalc/ -->
-<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<html>
+<head>
    <script type="text/javascript" src="func.js"></script>
 </head>
 <body>
@@ -71,6 +71,7 @@
       //drawLines( ctx, offset[0], offset[1], scale, [p1[0],p1[1],c[0],c[1],p2[0],p2[1]], "#ffff00", 2 );
       //console.log( "center: " + w/2 + "," + center );
 
+      // draw fretboard surface, sides, and bottom
       let v1 = sub(p1,c);
       let v2 = sub(p2,c);
       let d1 = length( v1 );
@@ -295,7 +296,7 @@
 </form>
 
 
-<canvas id="canvas" width="1440" height="4128" style="border:0px">
+<canvas id="canvas" width="100%" height="100%" style="border:0px"/>
 
 
 <script>
@@ -317,7 +318,6 @@
    resizeCanvas();
 </script>
 
+</body>
+</html>
 
-
-
-</canvas></body></html>
