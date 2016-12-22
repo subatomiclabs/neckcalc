@@ -1,0 +1,4 @@
+echo "updating /"
+mkdir -p  /Volumes/web/secret/site/neckcalc/
+cp -r * /Volumes/web/secret/site/neckcalc/
+
