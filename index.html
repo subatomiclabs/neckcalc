@@ -34,6 +34,9 @@
    function add(a,b) {
       return [a[0]+b[0], a[1]+b[1]];
    }
+   function inverse(a) {
+      return [-a[0], -a[1]];
+   }
    function length(a) {
       return Math.sqrt( a[0]*a[0] + a[1]*a[1] );
    }
@@ -88,29 +91,46 @@
       }
    }
 
-   function drawFretboard(offset, scale, d,w,r, fbt)
+   // given a width and radius for an arc, what is the centerpoint of the arc?
+   function computeArcCenterPoint( width, radius ) {
+      // Compute the point 'c'
+      // pythagorean theorem says:
+      // h*h = a*a + b*b
+      //
+      //          (w/2,b-r) = height of arc
+      //              |
+      // (0,0) -------.------- (w,0)
+      //              |a=w/2 /
+      //              |     /
+      //              |    /
+      //            b |   /
+      //              |  /  h = r = radius of arc
+      //              | /
+      //              |/
+      //              c = (w/2, b)
+      let pythagorean_a = width/2;
+      let pythagorean_h = radius;
+      let pythagorean_b = Math.sqrt( (pythagorean_h * pythagorean_h) - (pythagorean_a * pythagorean_a) );
+      return [pythagorean_a, pythagorean_b];
+   }
+
+   // given a width and radius for an arc, what is the height of the arc?
+   //
+   //          (w/2,height)
+   //              |
+   // (0,0) -------.------- (w,0)
+   function computeArcHeight( width, radius ) {
+      let c = computeArcCenterPoint( width, radius );
+      return radius - c[1];
+   }
+
+   function drawFretboard(offset, scale, d,w,r, fbt, textSize)
    {
-      let textSize = convertUnits( "in", neckUnits, 16 );
       let bounds = [0,0];
       let p1 = [0,0];
       let p2 = [w,0];
-
-      // Compute 'c'
-      // pythagorean
-      // h*h = a*a + b*b
-      // -----.-------
-      //      |a=w/2 /
-      //      |     /
-      //      |    /
-      //    b |   /
-      //      |  /  h=r
-      //      | /
-      //      |/
-      //      c
-      let pythagorean_a = w/2;
-      let pythagorean_h = r;
-      let pythagorean_b = Math.sqrt( (pythagorean_h * pythagorean_h) - (pythagorean_a * pythagorean_a) );
-      let c = [pythagorean_a, pythagorean_b];
+      let c = computeArcCenterPoint( w, r );
+      let top_of_fretboard = 0; //c[1] - r;
 
       drawPoint( ctx, offset[0], offset[1], scale, p1, "#ffff00" );
       drawPoint( ctx, offset[0], offset[1], scale, p2, "#ffff00" );
@@ -142,9 +162,7 @@
       bounds = max( bounds, add( offset, mul( scale, c ) ) );
 
       // build dxf file
-      //addTextToDxf( "// fretboard\n" );
       lineData.addLineFromFlatPoints( surface_pts_curve );
-      //addTextToDxf( ",\n" );
       lineData.addLineFromFlatPoints( fretboard_flat_points );
 
       // draw fretboard radius center label
@@ -191,7 +209,6 @@
          1*w,   0.00 * d + fbt
       ];
       let curve_pts = drawCurve(ctx, offset[0],offset[1], scale, pts, false, 16, "#00ff00", 2, true);
-      //addTextToDxf( "\n\n// neck\n" );
       lineData.addLineFromFlatPoints( curve_pts );
       return bounds;
    }
@@ -211,7 +228,6 @@
          1*w,   0.00 * d + fbt
       ];
       let curve_pts = drawCurve(ctx, offset[0],offset[1], scale, pts, false, 16, "#00ff00", 2, true);
-      //addTextToDxf( "\n\n// neck\n" );
       lineData.addLineFromFlatPoints( curve_pts );
       return bounds;
    }
@@ -230,7 +246,6 @@
          1*w,   0.00 * d + fbt
       ];
       let curve_pts = drawCurve(ctx, offset[0],offset[1], scale, pts, false, 16, "#00ff00", 2, true);
-      //addTextToDxf( "\n\n// neck\n" );
       lineData.addLineFromFlatPoints( curve_pts );
       return bounds;
    }
@@ -249,13 +264,11 @@
          1*w,   0.00 * d + fbt
       ];
       let curve_pts = drawCurve(ctx, offset[0],offset[1], scale, pts, false, 16, "#00ff00", 2, true);
-      //addTextToDxf( "\n\n// neck\n" );
       lineData.addLineFromFlatPoints( curve_pts );
       return bounds;
    }
-   function drawShape(offset, scale, d,w,r, fbt, shape)
+   function drawShape(offset, scale, d,w,r, fbt, shape, textSize)
    {
-      let textSize = convertUnits( "in", neckUnits, 16 );
       let bounds = [0,0];
       if (shape == "C")
          bounds = drawCshape( offset, scale, d,w,r, fbt );
@@ -280,9 +293,29 @@
       return bounds;
    }
 
+   // the generated unit-model has top left corner point at 0,0
+   // compute an offset to the model verts which moves 0,0 to another point on the model.
+   //
+   // origin:
+   //     'tl' top left of fretboard blank (before wood is carved away)
+   //     'bl' bottom left of fretboard
+   //     'tlc' top left corner of fretboard
+   //     'tc' top center of fretboard
+   //     'bc' bottom center of fretboard
+   function computeModelOffset( origin, w, r, fbt ) {
+      let arc_height = computeArcHeight( w, r );
+      if (origin == "tl") return [0,arc_height];
+      if (origin == "bl") return [0,-fbt];
+      if (origin == "tlc") return [0,0];
+      if (origin == "tc") return [-w/2,arc_height];
+      if (origin == "bc") return [-w/2,-fbt];
+      return [0,0];
+   }
+
    function drawStuff()
    {
       lineData.clear();
+      let textSize = convertUnits( "in", neckUnits, 16 );
       let form = document.getElementById("form");
       let s = parseFloat( form.scale.value );
       let o = parseFloat( form.offset.value );
@@ -296,7 +329,14 @@
       let sx = document.getElementById("shape").selectedIndex;
       let sy = document.getElementById("shape").options;
       let shape = sy[sx].value;
-      console.log( d + " " + w + " " + r + " "  + shape );
+      let modelOrigin_idx = document.getElementById("modelOrigin").selectedIndex;
+      let modelOrigin_options = document.getElementById("modelOrigin").options;
+      let modelOrigin = modelOrigin_options[modelOrigin_idx].value;
+      let modelOffset = computeModelOffset( modelOrigin, w, r, fbt );
+      lineData.setExporterOffset( modelOffset );
+      console.log( "depth:" + d + " width:" + w + " radius:" + r +
+                   " fbt:" + fbt + " " + " shape:"  + shape + " modelOrigin:" + modelOrigin +
+                   " model-offset:[" + modelOffset[0] + "," + modelOffset[1] + "]" );
 
       let height = 0;
       var c = document.getElementById("canvas");
@@ -306,8 +346,17 @@
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       let bounds = [0,0];
-      bounds = max( bounds, drawFretboard( offset, scale, d,w,r, fbt ) );
-      bounds = max( bounds, drawShape( offset, scale, d-fbt,w,r, fbt, shape ) );
+      bounds = max( bounds, drawFretboard( offset, scale, d,w,r, fbt, textSize ) );
+      bounds = max( bounds, drawShape( offset, scale, d-fbt,w,r, fbt, shape, textSize ) );
+
+      // draw origin and label
+      let origin = inverse( modelOffset );
+      drawPoint( ctx, offset[0], offset[1], scale, origin, "#0000ff" );
+      {
+         let off1 = convertUnits( "in", neckUnits, 0.01 );
+         drawText(ctx, offset[0], offset[1], scale, "(0,0)", origin[0]+off1, origin[1], "#ffffff", "bold", textSize);
+      }
+
 
       return bounds;
    }
@@ -337,7 +386,14 @@
   <input type="number" onchange="resizeCanvas()" name="offset" min="0" value="100" step="25"><br>
   <b>Model:</b>
   Scale:
-  <input type="number" onchange="resizeCanvas()" name="mscale" min="0" value="1" step="100"><br>
+  <input type="number" onchange="resizeCanvas()" name="mscale" min="0" value="1" step="100">
+  Origin:<select id="modelOrigin" name="modelOrigin" onchange="resizeCanvas()" form="modelOriginForm">
+   <option value="tl">Top Left of FretBoard Blank</option>
+   <option value="tlc">Top Left Corner of FretBoard</option>
+   <option value="bl">Bottom Left of FretBoard</option>
+   <option value="tc">Top Center of FretBoard</option>
+   <option value="bc">Bottom Center of FretBoard</option>
+  </select><br>
   <button type="button" onclick="convertCanvasToImage(canvas,'png')">PNG</button>
   <button type="button" onclick="convertCanvasToImage(canvas,'bmp')">BMP</button>
   <button type="button" onclick="convertCanvasToImage(canvas,'jpg')">JPG</button>

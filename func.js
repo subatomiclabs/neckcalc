@@ -39,11 +39,18 @@ function Lines() {
    this.d = []; // array of lines of 2D points
    this.startDXF = "";
    this.endDXF = "";
+   this.exporterOffset = [0,0];
+
+   this.setExporterOffset = function( o ) {
+      this.exporterOffset = o;
+   };
+
    this.clear = function() {
       this.d = [];
       readTextFile( "dxf-start.dxf", (data) => this.startDXF = data );
       readTextFile( "dxf-end.dxf", (data) => this.endDXF = data );
    };
+
    this.addLineFromFlatPoints = function( pts ) {
       let line = [];
       for (let x = 0; x < pts.length; x += 2) {
@@ -53,11 +60,11 @@ function Lines() {
       this.d.push( line );
    };
 
-   function dxfLwPolyLineBuilder( scale, which_obj, numverts, verts ) {
+   function dxfLwPolyLineBuilder( scale, offset, which_obj, numverts, verts ) {
       var str = "0\nLWPOLYLINE\n5\n" + (100 + which_obj) + "\n100\nAcDbEntity\n8\nLayer_1\n62\n7\n100\nAcDbPolyline\n90\n" + numverts + "\n70\n1\n";
       for (var v of verts) {
-         str += "10\n" + v[0] * scale + "\n";
-         str += "20\n" + v[1] * -scale + "\n";
+         str += "10\n" +  (offset[0] + v[0] * scale) + "\n";
+         str += "20\n" + -(offset[1] + v[1] * scale) + "\n";
          str += "30\n" + 0.0 * scale + "\n";
       }
       return str;
@@ -67,7 +74,7 @@ function Lines() {
    {
       let dxf = [];
       dxf.push( this.startDXF );
-      var scale = 100.0;
+      var scale = 1.0;
       var which_obj = 0;
 
       /*
@@ -96,18 +103,19 @@ function Lines() {
 
       for (var i = 0; i < this.d.length; ++i) {
          var line = this.d[i];
-         dxf.push( dxfLwPolyLineBuilder( scale, which_obj, line.length, line ) );
+         dxf.push( dxfLwPolyLineBuilder( scale, this.exporterOffset,
+                                         which_obj, line.length, line ) );
          ++which_obj;
       }
       dxf.push( this.endDXF );
       return dxf;
    };
 
-   function svgLineBuilder( scale, which_obj, numverts, verts ) {
+   function svgLineBuilder( scale, offset, which_obj, numverts, verts ) {
       var str = '    <path vector-effect="non-scaling-stroke" d="M ';
       for (var v of verts) {
-         str += v[0] * scale + ',';
-         str += v[1] * scale + ' ';
+         str += (offset[0] + v[0] * scale) + ',';
+         str += (offset[1] + v[1] * scale) + ' ';
       }
       str += 'Z" />\n';
       return str;
@@ -122,18 +130,20 @@ function Lines() {
                 '  <g id="svgGroup" stroke="#000" stroke-width="0.25mm" stroke-linecap="round" fill="none" fill-rule="evenodd" font-size="9pt">\n' );
       for (var i = 0; i < this.d.length; ++i) {
          var line = this.d[i];
-         svg.push( svgLineBuilder( scale, which_obj, line.length, line ) );
+         svg.push( svgLineBuilder( scale, this.exporterOffset,
+                                   which_obj, line.length, line ) );
          ++which_obj;
       }
       svg.push( '  </g>\n</svg>\n' );
       return svg;
    }
 
-   function svgLineBuilderAlt( scale, which_obj, numverts, verts ) {
+   function svgLineBuilderAlt( scale, offset, which_obj, numverts, verts ) {
       var str = '    <path vector-effect="non-scaling-stroke" d="M ';
       var output_verts = [];
       for (var v of verts) {
-         output_verts.push( v[0] * scale + ' ' + v[1] * scale );
+         output_verts.push( (offset[0] + v[0] * scale) + ' ' +
+                            (offset[1] + v[1] * scale) );
       }
       // add the first one again...
       if (0 < verts.length) output_verts.push( verts[0][0] * scale + ' ' + verts[0][1] * scale );
@@ -151,7 +161,8 @@ function Lines() {
                 '  <g id="svgGroup" stroke="#000" stroke-width="0.25mm" stroke-linecap="round" fill="none" fill-rule="evenodd" font-size="9pt">\n' );
       for (var i = 0; i < this.d.length; ++i) {
          var line = this.d[i];
-         svg.push( svgLineBuilderAlt( scale, which_obj, line.length, line ) );
+         svg.push( svgLineBuilderAlt( scale, this.exporterOffset,
+                                      which_obj, line.length, line ) );
          ++which_obj;
       }
       svg.push( '  </g>\n</svg>\n' );
