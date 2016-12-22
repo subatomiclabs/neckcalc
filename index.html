@@ -44,32 +44,77 @@
       let l = length(v);
       return [v[0] / l, v[1] / l];
    }
-   var dxfData = [];
-   function clearDxf() {dxfData = [];}
-   function addFlatPointsToDxf( pts ) {
-     for (let x = 0; x < pts.length; x += 2) {
-       dxfData.push(pts[x+0].toString() + ",");
-       dxfData.push(pts[x+1].toString() + ((x<pts.length-2)?",\n":""));
-     }
+   let lineData = new Lines();
+   let neckUnits = 'in';
+
+   function convertUnits( from, to, value ) {
+      // convert to mm
+      var inches_to_mm = 25.4;
+      var m_to_mm = 100;
+      if (from == "in")
+         value *= inches_to_mm;
+      else if (from == "m")
+         value *= m_to_mm;
+
+      // convert from mm
+      if (to == "in")
+         value /= inches_to_mm;
+      else if (to == "m")
+         value /= m_to_mm;
+
+      return value;
    }
-   function addTextToDxf( txt ) {
-      dxfData.push(txt);
+
+   function onUnitsChanged()
+   {
+      let newNeckUnits_idx = document.getElementById("units").selectedIndex;
+      let newNeckUnits_options = document.getElementById("units").options;
+      let newNeckUnits = newNeckUnits_options[newNeckUnits_idx].value;
+
+      if (neckUnits != newNeckUnits) {
+         console.log( "Switching from [" + neckUnits + "] to [" + newNeckUnits + "]" );
+
+         let form = document.getElementById("form");
+         form.depth.value = convertUnits( neckUnits, newNeckUnits, parseFloat( form.depth.value ) ).toString();
+         form.width.value = convertUnits( neckUnits, newNeckUnits, parseFloat( form.width.value ) ).toString();
+         form.radius.value = convertUnits( neckUnits, newNeckUnits, parseFloat( form.radius.value ) ).toString();
+         form.fbt.value = convertUnits( neckUnits, newNeckUnits, parseFloat( form.fbt.value ) ).toString();
+
+         // inverted
+         form.scale.value = convertUnits( newNeckUnits, neckUnits, parseFloat( form.scale.value ) ).toString();
+         //form.offset.value = convertUnits( newNeckUnits, neckUnits, parseFloat( form.offset.value ) ).toString();
+
+         neckUnits = newNeckUnits;
+      }
    }
 
    function drawFretboard(offset, scale, d,w,r, fbt)
    {
+      let textSize = convertUnits( "in", neckUnits, 16 );
       let bounds = [0,0];
       let p1 = [0,0];
       let p2 = [w,0];
+
+      // Compute 'c'
       // pythagorean
       // h*h = a*a + b*b
-      let center = Math.sqrt( (r * r) / ((w/2) * (w/2)) );
-      let c = [w/2,center];
+      // -----.-------
+      //      |a=w/2 /
+      //      |     /
+      //      |    /
+      //    b |   /
+      //      |  /  h=r
+      //      | /
+      //      |/
+      //      c
+      let pythagorean_a = w/2;
+      let pythagorean_h = r;
+      let pythagorean_b = Math.sqrt( (pythagorean_h * pythagorean_h) - (pythagorean_a * pythagorean_a) );
+      let c = [pythagorean_a, pythagorean_b];
+
       drawPoint( ctx, offset[0], offset[1], scale, p1, "#ffff00" );
       drawPoint( ctx, offset[0], offset[1], scale, p2, "#ffff00" );
-      drawPoint( ctx, offset[0], offset[1], scale, c, "#ffff00" );
-      //drawLines( ctx, offset[0], offset[1], scale, [p1[0],p1[1],c[0],c[1],p2[0],p2[1]], "#ffff00", 2 );
-      //console.log( "center: " + w/2 + "," + center );
+      //console.log( "pythagorean  a:" + w/2 + ", b:" + pythagorean_b );
 
       // draw fretboard surface, sides, and bottom
       let v1 = sub(p1,c);
@@ -97,34 +142,37 @@
       bounds = max( bounds, add( offset, mul( scale, c ) ) );
 
       // build dxf file
-      addTextToDxf( "// fretboard\n" );
-      addFlatPointsToDxf( surface_pts_curve );
-      addTextToDxf( ",\n" );
-      addFlatPointsToDxf( fretboard_flat_points );
+      //addTextToDxf( "// fretboard\n" );
+      lineData.addLineFromFlatPoints( surface_pts_curve );
+      //addTextToDxf( ",\n" );
+      lineData.addLineFromFlatPoints( fretboard_flat_points );
 
       // draw fretboard radius center label
       {
-         let off1 = 0.09;
-         let off2 = off1 + 0.01;
-         drawText(ctx, offset[0], offset[1], scale, "center of " + r.toString() + " radius", c[0]+off2, c[1], "#ffffff", "bold", 16);
-         bounds[1] += 10; // bottom padding
+         let off1 = convertUnits( "in", neckUnits, 0.09 );
+         let off2 = off1 + convertUnits( "in", neckUnits, 0.01 );
+         drawText(ctx, offset[0], offset[1], scale, "center of " + r.toString() + neckUnits + " radius", c[0]+off2, c[1], "#ffffff", "bold", textSize);
+         bounds[1] += convertUnits( "in", neckUnits, 10 ); // bottom padding
       }
       // draw fretboard thickness label
       {
-         let off1 = 0.09;
-         let off2 = off1 + 0.01;
-         let tw = drawText(ctx, offset[0], offset[1], scale, fbt.toString() + " thick", p2[0]+off2, p2[1]+fbt/2, "#ffffff", "bold", 16);
+         let off1 = convertUnits( "in", neckUnits, 0.09 );
+         let off2 = off1 + convertUnits( "in", neckUnits, 0.01 );
+         let tw = drawText(ctx, offset[0], offset[1], scale, fbt.toString() + neckUnits + " thick", p2[0]+off2, p2[1]+fbt/2, "#ffffff", "bold", textSize);
          drawLines( ctx, offset[0], offset[1], scale, [p2[0]+off1,p2[1], p2[0]+off1,p2[1]+fbt], "#ffffff", 2 );
          bounds[0] += off2*scale[0]+tw; // bump out for the label
-         bounds[0] += 10; // right padding
+         bounds[0] += convertUnits( "in", neckUnits, 10 ); // right padding
       }
       // draw fretboard width label
       {
-         let off1 = -0.09;
-         let off2 = off1 - 0.01;
-         drawText(ctx, offset[0], offset[1], scale, w.toString() + " w  (" + r.toString() + " radius)", (p1[0]+p2[0])/2, (p1[0]+p2[1])/2 + off2, "#ffffff", "bold", 16);
+         let off1 = convertUnits( "in", neckUnits, -0.09 );
+         let off2 = off1 - convertUnits( "in", neckUnits, 0.01 );
+         drawText(ctx, offset[0], offset[1], scale, w.toString() + neckUnits + " w  (" + r.toString() + neckUnits + " radius)", (p1[0]+p2[0])/2, (p1[0]+p2[1])/2 + off2, "#ffffff", "bold", textSize);
          drawLines( ctx, offset[0], offset[1], scale, [p1[0],p1[1]+off1, p2[0],p2[1]+off1], "#ffffff", 2 );
       }
+
+      drawPoint( ctx, offset[0], offset[1], scale, c, "#0000ff" );
+      //console.log( "hi: " + offset[0] + " " + offset[1] + " " + scale + " " + c[0] + " " + c[1] );
       return bounds;
    }
 
@@ -143,8 +191,8 @@
          1*w,   0.00 * d + fbt
       ];
       let curve_pts = drawCurve(ctx, offset[0],offset[1], scale, pts, false, 16, "#00ff00", 2, true);
-      addTextToDxf( "\n\n// neck\n" );
-      addFlatPointsToDxf( curve_pts );
+      //addTextToDxf( "\n\n// neck\n" );
+      lineData.addLineFromFlatPoints( curve_pts );
       return bounds;
    }
 
@@ -163,8 +211,8 @@
          1*w,   0.00 * d + fbt
       ];
       let curve_pts = drawCurve(ctx, offset[0],offset[1], scale, pts, false, 16, "#00ff00", 2, true);
-      addTextToDxf( "\n\n// neck\n" );
-      addFlatPointsToDxf( curve_pts );
+      //addTextToDxf( "\n\n// neck\n" );
+      lineData.addLineFromFlatPoints( curve_pts );
       return bounds;
    }
    function drawDshape(offset, scale, d,w,r, fbt)
@@ -182,8 +230,8 @@
          1*w,   0.00 * d + fbt
       ];
       let curve_pts = drawCurve(ctx, offset[0],offset[1], scale, pts, false, 16, "#00ff00", 2, true);
-      addTextToDxf( "\n\n// neck\n" );
-      addFlatPointsToDxf( curve_pts );
+      //addTextToDxf( "\n\n// neck\n" );
+      lineData.addLineFromFlatPoints( curve_pts );
       return bounds;
    }
    function drawRVshape(offset, scale, d,w,r, fbt)
@@ -201,12 +249,13 @@
          1*w,   0.00 * d + fbt
       ];
       let curve_pts = drawCurve(ctx, offset[0],offset[1], scale, pts, false, 16, "#00ff00", 2, true);
-      addTextToDxf( "\n\n// neck\n" );
-      addFlatPointsToDxf( curve_pts );
+      //addTextToDxf( "\n\n// neck\n" );
+      lineData.addLineFromFlatPoints( curve_pts );
       return bounds;
    }
    function drawShape(offset, scale, d,w,r, fbt, shape)
    {
+      let textSize = convertUnits( "in", neckUnits, 16 );
       let bounds = [0,0];
       if (shape == "C")
          bounds = drawCshape( offset, scale, d,w,r, fbt );
@@ -219,13 +268,13 @@
 
       // draw shape type label
       {
-         let off1 = +0.09;
-         drawText(ctx, offset[0], offset[1], scale, '"C" type', 0.5*w, d + fbt + off1, "#ffffff", "bold", 16);
+         let off1 = convertUnits( "in", neckUnits, +0.09 );
+         drawText(ctx, offset[0], offset[1], scale, '"C" type', 0.5*w, d + fbt + off1, "#ffffff", "bold", textSize);
       }
       // draw neck depth label
       {
-         let off1 = +0.04;
-         drawText(ctx, offset[0], offset[1], scale, w.toString() + " depth", 0.5*w + off1, (d + fbt)*0.5, "#ffffff", "bold", 16);
+         let off1 = convertUnits( "in", neckUnits, +0.04 );
+         drawText(ctx, offset[0], offset[1], scale, w.toString() + neckUnits + " depth", 0.5*w + off1, (d + fbt)*0.5, "#ffffff", "bold", textSize);
          drawLines( ctx, offset[0], offset[1], scale, [0.5*w, 0, 0.5*w, d + fbt], "#ffffff", 2 );
       }
       return bounds;
@@ -233,7 +282,7 @@
 
    function drawStuff()
    {
-      clearDxf();
+      lineData.clear();
       let form = document.getElementById("form");
       let s = parseFloat( form.scale.value );
       let o = parseFloat( form.offset.value );
@@ -256,10 +305,6 @@
       ctx.fillStyle = "#000000";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      //drawStar( ctx, 10,10, 100, "#ff0000", "#00ff00", 2 );
-      //drawStar( ctx, 10,50, 100, "#ff0000", "#00ff00", 2 );
-      //drawStar( ctx, 50,10, 100, "#ff0000", "#00ff00", 2 );
-
       let bounds = [0,0];
       bounds = max( bounds, drawFretboard( offset, scale, d,w,r, fbt ) );
       bounds = max( bounds, drawShape( offset, scale, d-fbt,w,r, fbt, shape ) );
@@ -269,30 +314,39 @@
 </script>
 
 <form id="form">
-  Depth:
-  <input type="number" onchange="resizeCanvas()" name="depth" min="0" value="0.787402" step="0.1"><br>
-  Width:
-  <input type="number" onchange="resizeCanvas()" name="width" min="0" value="1.692" step="0.1"><br>
-  Radius:
-  <input type="number" onchange="resizeCanvas()" name="radius" min="0" value="12" step="0.25"><br>
-  FretBoard Thickness:
-  <input type="number" onchange="resizeCanvas()" name="fbt" min="0" value="0.125" step="0.0625"><br>
-  Shape Type:
-  <select id="shape" name="shape" onchange="resizeCanvas()" form="shapeForm">
+   <b>Neck:</b><BR>Depth:
+  <input type="number" onchange="resizeCanvas()" name="depth" min="0" value="0.787402" step="0.1">
+  Width:<input type="number" onchange="resizeCanvas()" name="width" min="0" value="1.692" step="0.1">
+  Radius:<input type="number" onchange="resizeCanvas()" name="radius" min="0" value="12" step="0.25">
+  FretBoard&nbsp;Thickness:<input type="number" onchange="resizeCanvas()" name="fbt" min="0" value="0.125" step="0.0625"><br>
+  Shape Type:<select id="shape" name="shape" onchange="resizeCanvas()" form="shapeForm">
    <option value="C">C</option>
    <option value="D">D</option>
    <option value="V">V</option>
    <option value="rV">Rounded V</option>
+  </select>
+  Units:<select id="units" name="units" onchange="onUnitsChanged(); resizeCanvas()" form="unitsForm">
+   <option value="in">Inches</option>
+   <option value="mm">MilliMeters</option>
+   <option value="m">Meters</option>
   </select><br>
+  <b>Image:</b>
   Scale:
   <input type="number" onchange="resizeCanvas()" name="scale" min="0" value="300" step="25">
   Offset:
   <input type="number" onchange="resizeCanvas()" name="offset" min="0" value="100" step="25"><br>
+  <b>Model:</b>
+  Scale:
+  <input type="number" onchange="resizeCanvas()" name="mscale" min="0" value="1" step="100"><br>
   <button type="button" onclick="convertCanvasToImage(canvas,'png')">PNG</button>
   <button type="button" onclick="convertCanvasToImage(canvas,'bmp')">BMP</button>
   <button type="button" onclick="convertCanvasToImage(canvas,'jpg')">JPG</button>
-  <button type="button" onclick="showText(dxfData, 'text/plain')">DXF</button>
-  <button type="button" onclick="saveText(dxfData, 'fretboard_and_neck.dxf', 'application/dxf')">Save DXF</button>
+  <button type="button" onclick="showText(lineData.toDXF(), 'text/plain')">DXF</button>
+  <button type="button" onclick="saveText(lineData.toDXF(), 'fretboard_and_neck.dxf', 'application/dxf')">Save DXF</button>
+  <button type="button" onclick="showText(lineData.toSVG(), 'text/plain')">SVG</button>
+  <button type="button" onclick="saveText(lineData.toSVG(), 'fretboard_and_neck.svg', 'application/dxf')">Save SVG</button>
+  <button type="button" onclick="showText(lineData.toSVGalt(), 'text/plain')">SVG (alt)</button>
+  <button type="button" onclick="saveText(lineData.toSVGalt(), 'fretboard_and_neck.svg', 'application/dxf')">Save SVG (alt)</button>
 </form>
 
 

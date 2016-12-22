@@ -1,0 +1,5 @@
+Maker.js
+
+epiphone les paul neck:
+43mm  1.69291in
+57mm  2.24409in
