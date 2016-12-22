@@ -1,0 +1,72 @@
+COMMON CODES:
+http://www.autodesk.com/techpubs/autocad/acad2000/dxf/common_group_codes_for_entities_dxf_06.htm#XREF_22164_DXF_06
+
+LINE:
+http://www.autodesk.com/techpubs/autocad/acad2000/dxf/line_dxf_06.htm
+
+0
+SECTION
+2
+HEADER
+9
+$INSUNITS
+70
+4
+0
+ENDSEC
+0
+SECTION
+2
+ENTITIES
+0   Entity type
+LINE
+8   Layer name
+0
+10  Start point X value (in WCS)
+0
+20  Y (20) Z (30) value of start point (in WCS)
+0
+11  End point X value (in WCS)
+100
+21  Y (21) Z (31) value of end point (in WCS)
+0
+0
+LINE
+8
+0
+10
+100
+20
+0
+11
+100
+21
+100
+0
+LINE
+8
+0
+10
+100
+20
+100
+11
+0
+21
+100
+0
+LINE
+8
+0
+10
+0
+20
+100
+11
+0
+21
+0
+0
+ENDSEC
+0
+EOF
